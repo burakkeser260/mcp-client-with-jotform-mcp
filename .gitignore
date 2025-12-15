@@ -1,0 +1,5 @@
+.env
+db/
+output.json
+node_modules/
+output-*.json

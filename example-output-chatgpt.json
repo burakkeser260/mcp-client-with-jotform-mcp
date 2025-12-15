@@ -1,0 +1,355 @@
+{
+  "timestamp": "2025-01-01T00:00:00.000Z",
+  "endpoint": "chatgpt",
+  "mcpUrl": "https://mcp.jotform.com/chatgpt",
+  "session": {
+    "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "connected": true,
+    "connectedAt": "2025-01-01T00:00:00.000Z"
+  },
+  "tools": [
+    {
+      "name": "search",
+      "title": "Universal Search",
+      "description": "Search forms by title and/or submissions by natural language query.\nSubmissions scope: Provide form_id to search submissions of a single form. Without form_id, submissions are searched only within forms matched by form_query (there is no global all-forms submissions search).\nQueries: form_query is an array of plain strings for form title matching (OR logic). submission_inquiry is a single natural language sentence describing the desired submission filter (IMPORTANT: send it as a plain string, never as an array). Regex is not supported.\nEmpty form query: Empty form_query lists your forms.\nSubmission inquiry: When search_submissions is true, submission_inquiry is REQUIRED and must contain a non-empty natural language string. Empty submission_inquiry will return an error when searching submissions.\nToggles: Use search_forms and search_submissions to include forms and/or submissions in the result. limit controls the number fetched per underlying request.\nExamples: (1) form_query=[\"invoice\"] to find forms; (2) form_id=\"123\" and submission_inquiry=\"payments above 100 usd\" to find matching submissions in that form; (3) form_query=[\"order\"], submission_inquiry=\"customers requesting refunds\" to search submissions only within forms whose titles match \"order\".",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "form_id": {
+            "type": "string",
+            "description": "Optional: ID of a single form. Required to search that form's submissions directly. When omitted, submissions are searched only within forms matched by form_query (no global all-forms submissions search)."
+          },
+          "form_query": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of plain strings matched against form titles (OR logic). Regex is not supported. Empty array lists your forms."
+          },
+          "user_query": {
+            "type": "string",
+            "description": "The exact user query written in the chat."
+          },
+          "submission_inquiry": {
+            "type": "string",
+            "description": "REQUIRED when search_submissions is true: Using the user_query, provide a single natural language sentence that filters the submissions (plain string only; do NOT wrap it in an array). e.g., \"people who filled vegan as yes\"."
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum items fetched per underlying request (default: 20)."
+          },
+          "search_forms": {
+            "type": "boolean",
+            "description": "Include forms matched by form_query in results (default: true)."
+          },
+          "search_submissions": {
+            "type": "boolean",
+            "description": "Include submissions matched by submission_query in results (default: true). Without form_id, searches only within forms matched by form_query."
+          }
+        },
+        "required": [
+          "form_id",
+          "form_query",
+          "user_query",
+          "submission_inquiry",
+          "limit",
+          "search_forms",
+          "search_submissions"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "title": "Universal Search",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "_meta": {}
+    },
+    {
+      "name": "fetch",
+      "title": "Fetch",
+      "description": "This tool is fetching information and metadata from the Jotform based on a form id or a submission id",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The form id or the submission id to fetch information and metadata from"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "title": "Fetch",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "_meta": {}
+    },
+    {
+      "name": "create_form",
+      "title": "Create Form",
+      "description": "Create a new form based on the user's prompt",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "description"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "title": "Create Form",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "_meta": {},
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "createdRevisionID": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "created_questions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "createdRevisionID",
+          "id",
+          "url",
+          "created_questions",
+          "error",
+          "message"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "edit_form",
+      "title": "Edit Form",
+      "description": "Edit a form based on the user's prompt. To be able to edit a form you should own or have access to it. The Fetch tool should be first called to fetch the form details and pass the ownership check then this function should be called. Use high-level natural-language instructions only (e.g., \"Add a name question at the top\", \"Move the email question to the end\"). Do not specify internal field types, control names, or IDs. Another agent will map your intent to exact field types.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "form_id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "description": "High-level natural-language instruction describing what to change (e.g., add/move/rename questions). Avoid specifying internal types or identifiers; another agent will infer the appropriate field types."
+          }
+        },
+        "required": [
+          "form_id",
+          "description"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "title": "Edit Form",
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "_meta": {},
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "editedRevisionID": {
+            "type": "string"
+          },
+          "startRevisionID": {
+            "type": "string"
+          },
+          "edited_form": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "changes": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "url"
+            ],
+            "additionalProperties": true
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "editedRevisionID",
+          "startRevisionID",
+          "edited_form",
+          "error"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    },
+    {
+      "name": "create_submission",
+      "title": "Submit a new submission for a form with checkpoint",
+      "description": "Create a submission for a form.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "form_id": {
+            "type": "string",
+            "description": "The ID of the form to submit to. If you do not have information about to form use list_forms, search or fetch to get the form by its id."
+          },
+          "question_answers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "question_text": {
+                  "type": "string",
+                  "description": "The text of the question to answer."
+                },
+                "answer": {
+                  "type": "string",
+                  "description": "The answer to the question."
+                }
+              },
+              "additionalProperties": true
+            },
+            "description": "The answers to the questions in the form in text format. Answers will be extracted based on the question text and answer."
+          }
+        },
+        "required": [
+          "form_id",
+          "question_answers"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      },
+      "annotations": {
+        "title": "Submit a new submission for a form with checkpoint",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "_meta": {},
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "form_id": {
+            "type": "string",
+            "description": "The ID of the form that the submission is for."
+          },
+          "result": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "submission_id": {
+                    "type": "string",
+                    "description": "The submission ID of the submission."
+                  },
+                  "inbox_link": {
+                    "type": "string",
+                    "description": "The inbox link of the submission."
+                  },
+                  "submission_link": {
+                    "type": "string",
+                    "description": "The submission link of the submission."
+                  }
+                },
+                "required": [
+                  "submission_id"
+                ],
+                "additionalProperties": true,
+                "description": "The result of the submission. If the submission is successful, the submission id can be returned or an unknown value can be returned. Show the inbox link and submission link if the its possible."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "error": {
+                    "type": "string",
+                    "description": "The error message of the submission failure."
+                  },
+                  "guidance": {
+                    "type": "string",
+                    "description": "The guidance to the user to troubleshoot the submission failure. (e.g. if the submission fails because of a missing question, the guidance might suggest filling the missing question)"
+                  }
+                },
+                "required": [
+                  "error",
+                  "guidance"
+                ],
+                "additionalProperties": true,
+                "description": "The result of the submission. If the submission fails, the error message will be returned with a guidance to troubleshoot the submission failure."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "guidance": {
+                    "type": "string",
+                    "description": "The guidance to the user to ask for the information."
+                  }
+                },
+                "required": [
+                  "guidance"
+                ],
+                "additionalProperties": true,
+                "description": "The result of the submission. If the submission requires more information, the guidance will be returned to ask the user for the information."
+              }
+            ],
+            "description": "The result of the submission."
+          }
+        },
+        "required": [
+          "form_id",
+          "result"
+        ],
+        "additionalProperties": false,
+        "$schema": "http://json-schema.org/draft-07/schema#"
+      }
+    }
+  ],
+  "errors": []
+}
